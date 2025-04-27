@@ -33,8 +33,9 @@ const UploadScreen = ({ navigation }) => {
         RNImage.getSize(imageUri, (width, height) => {
           const newImage = {
             uri: imageUri,
-            description: '',
-            tags: [],
+            description: 'A beautiful image uploaded by the user',
+            tags: ['test', 'upload', 'image', 'photo', 'new', 'recent'],
+            userDescription: 'This is a test image for search functionality',
             width,
             height,
           };
@@ -46,8 +47,9 @@ const UploadScreen = ({ navigation }) => {
           // fallback if getSize fails
           const newImage = {
             uri: imageUri,
-            description: '',
-            tags: [],
+            description: 'A beautiful image uploaded by the user',
+            tags: ['test', 'upload', 'image', 'photo', 'new', 'recent'],
+            userDescription: 'This is a test image for search functionality',
           };
           const imageId = addImage(newImage);
           navigation.navigate('Everything', { 

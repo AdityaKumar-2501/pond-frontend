@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import darkTheme from "../themes/darkTheme";
@@ -15,11 +15,15 @@ const SearchBar = () => {
                 <TouchableOpacity 
                     className="flex justify-center items-center p-2 rounded-full" 
                     >
-                    <Ionicons
+                    <Image
+                        source={require('../assets/icon.png')}
+                        style={{ width: 40, height: 30 }}
+                    />
+                    {/* <Ionicons
                         name="menu"
                         size={30}
                         color={darkTheme.primary}
-                    />
+                    /> */}
                 </TouchableOpacity>
 
                 {/* Search Input */}

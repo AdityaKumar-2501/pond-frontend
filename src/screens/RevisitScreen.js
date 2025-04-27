@@ -113,17 +113,24 @@ const RevisitScreen = () => {
           />
         </TouchableOpacity>
         {/* Description */}
+        {
+          /* 
         <Text className="text-base mb-2 text-center" style={{ color: darkTheme.textPrimary }}>
           {image.description || 'No description available'}
         </Text>
+        */
+      }
         {/* Tags */}
+        {/** 
         <View className="flex-row flex-wrap gap-2 mb-8 justify-center">
           {image.tags && image.tags.map((tag, idx) => (
             <View key={idx} className="px-3 py-1 rounded-full" style={{ backgroundColor: darkTheme.surface }}>
               <Text style={{ color: darkTheme.textPrimary }}>{tag}</Text>
             </View>
           ))}
+          
         </View>
+        */}
         {/* Buttons */}
         <View className="flex-row justify-center items-center gap-8 mt-8">
           <TouchableOpacity
