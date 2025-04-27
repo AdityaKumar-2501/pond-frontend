@@ -1,19 +1,26 @@
-import React from 'react';
-import { View, Text, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Platform, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-
 import HomeScreen from '../screens/HomeScreen';
 import UploadScreen from '../screens/UploadScreen';
-import RevindScreen from '../screens/RevindScreen';
+import RevisitScreen from '../screens/RevisitScreen';
 import SearchScreen from '../screens/SearchScreen';
+import LoginScreen from '../screens/LoginScreen';
+import darkTheme from '../themes/darkTheme';
+import { useImages } from '../contexts/ImageContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-const TabIcon = ({ focused, icon, label }) => (
-  <View style={{ alignItems: 'center', justifyContent: 'center', width:100,}}>
+const TabIcon = ({ focused, icon, label, disabled }) => (
+  <View style={{ 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    width: 100,
+    opacity: disabled ? 0.5 : 1
+  }}>
     <Ionicons 
       name={icon} 
       size={24} 
@@ -29,7 +36,7 @@ const TabIcon = ({ focused, icon, label }) => (
   </View>
 );
 
-const TabNavigator = () => {
+const TabNavigator = ({ hasImages, setHasImages }) => {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -67,7 +74,6 @@ const TabNavigator = () => {
       />
       <Tab.Screen 
         name="Upload" 
-        component={UploadScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon 
@@ -77,17 +83,30 @@ const TabNavigator = () => {
             />
           ),
         }}
-      />
+      >
+        {(props) => <UploadScreen {...props} />}
+      </Tab.Screen>
       <Tab.Screen 
         name="Revisit" 
-        component={RevindScreen}
+        component={RevisitScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon 
               focused={focused} 
               icon="time-outline" 
               label="Revisit"
-              color={focused ? '#FF5733' : 'rgba(255, 255, 255, 0.5)'}
+              disabled={!hasImages}
+            />
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              disabled={!hasImages}
+              onPress={() => {
+                if (hasImages) {
+                  props.onPress();
+                }
+              }}
             />
           ),
         }}
@@ -97,14 +116,27 @@ const TabNavigator = () => {
 };
 
 const AppNavigator = () => {
+  const { hasImages } = useImages();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
       }}
     >
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
-      <Stack.Screen name="Search" component={SearchScreen} />
+      {!isLoggedIn ? (
+        <Stack.Screen name="Login">
+          {(props) => <LoginScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
+        </Stack.Screen>
+      ) : (
+        <>
+          <Stack.Screen name="MainTabs">
+            {(props) => <TabNavigator {...props} hasImages={hasImages} />}
+          </Stack.Screen>
+          <Stack.Screen name="Search" component={SearchScreen} />
+        </>
+      )}
     </Stack.Navigator>
   );
 };

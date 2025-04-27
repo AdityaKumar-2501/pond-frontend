@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '../components/SearchBar';
 import darkTheme from '../themes/darkTheme';
+import { useImages } from '../contexts/ImageContext';
 
-const HomeScreen = () => {
+const HomeScreen = ({ route, navigation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [userDescription, setUserDescription] = useState('');
+  const [showDeletePrompt, setShowDeletePrompt] = useState(false);
+  
+  const { images, deleteImage } = useImages();
+
+  useEffect(() => {
+    if (route.params?.selectedImageId) {
+      const image = images.find(img => img.id === route.params.selectedImageId);
+      if (image) {
+        setSelectedImage(image);
+        setIsModalVisible(true);
+        // Clear the selectedImageId from route params after opening the modal
+        navigation.setParams({ selectedImageId: undefined });
+      }
+    }
+  }, [route.params?.selectedImageId, images]);
 
   const openModal = (image) => {
-    setSelectedImage({
-      ...image,
-      aiDescription: 'This is a sample AI-generated description of the image. It provides context and details about the visual content.',
-      tags: ['Nature', 'Landscape', 'Photography']
-    });
+    setSelectedImage(image);
     setIsModalVisible(true);
   };
 
@@ -23,18 +35,53 @@ const HomeScreen = () => {
     setIsModalVisible(false);
     setSelectedImage(null);
     setUserDescription('');
+    setShowDeletePrompt(false);
   };
+
+  const handleDelete = () => {
+    if (selectedImage) {
+      deleteImage(selectedImage.id);
+      closeModal();
+    }
+  };
+
+  const navigateToUpload = () => {
+    navigation.navigate('Upload');
+  };
+
+  if (images.length === 0) {
+    return (
+      <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
+        <SearchBar />
+        <View className="flex-1 justify-center items-center px-6">
+          <View className="w-24 h-24 rounded-full justify-center items-center mb-6" 
+                style={{ backgroundColor: darkTheme.surface }}>
+            <Ionicons name="images-outline" size={48} color={darkTheme.textSecondary} />
+          </View>
+          <Text className="text-2xl font-bold text-center mb-2" style={{ color: darkTheme.textPrimary }}>
+            No Images Yet
+          </Text>
+          <Text className="text-base text-center mb-8" style={{ color: darkTheme.textSecondary }}>
+            Start by uploading your first image to begin your journey
+          </Text>
+          <TouchableOpacity
+            className="px-6 py-3 rounded-full"
+            style={{ backgroundColor: darkTheme.primary }}
+            onPress={navigateToUpload}
+          >
+            <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
+              Upload Image
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
       {/* Header */}
       <SearchBar />
-      {/* <View className="flex-row items-center justify-between px-6 py-4 border-b" style={{ borderColor: darkTheme.border }}>
-        <Text className="text-3xl font-bold" style={{ color: darkTheme.textPrimary }}>mymind</Text>
-        <TouchableOpacity className="p-2 rounded-full" style={{ backgroundColor: darkTheme.surface }}>
-          <Ionicons name="add-circle-outline" size={24} color={darkTheme.primary} />
-        </TouchableOpacity>
-      </View> */}
 
       {/* Content Grid */}
       <ScrollView 
@@ -43,35 +90,30 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row flex-wrap gap-4 mt-10 mb-20">
-          {[
-            { type: 'tall', id: 1, height: 'h-72', iconSize: 40, text: 'Featured', textSize: 'text-lg', circleSize: 'w-20 h-20' },
-            { type: 'regular', id: 2, height: 'h-56', iconSize: 32, text: 'Item', textSize: 'text-base', circleSize: 'w-16 h-16' },
-            { type: 'regular', id: 3, height: 'h-44', iconSize: 32, text: 'Item', textSize: 'text-base', circleSize: 'w-16 h-16' },
-            { type: 'tall', id: 4, height: 'h-64', iconSize: 40, text: 'Featured', textSize: 'text-lg', circleSize: 'w-20 h-20' },
-            { type: 'tall', id: 5, height: 'h-52', iconSize: 40, text: 'Featured', textSize: 'text-lg', circleSize: 'w-20 h-20' },
-            { type: 'regular', id: 6, height: 'h-60', iconSize: 32, text: 'Item', textSize: 'text-base', circleSize: 'w-16 h-16' },
-            { type: 'regular', id: 7, height: 'h-48', iconSize: 32, text: 'Item', textSize: 'text-base', circleSize: 'w-16 h-16' },
-            { type: 'tall', id: 8, height: 'h-68', iconSize: 40, text: 'Featured', textSize: 'text-lg', circleSize: 'w-20 h-20' }
-          ].map((item, index) => (
-            <View key={item.id} className="w-[48%]">
-              <TouchableOpacity
-                className={`${item.height} rounded-2xl overflow-hidden border mb-4`}
-                style={{ 
-                  backgroundColor: darkTheme.surface, 
-                  borderColor: darkTheme.border,
-                }}
-                onPress={() => openModal({ type: item.type, id: item.id })}
-              >
-                <View className="flex-1 items-center justify-center p-4">
-                  <View className={`${item.circleSize} rounded-full items-center justify-center mb-4`}
-                    style={{ backgroundColor: darkTheme.background }}>
-                    <Ionicons name="image-outline" size={item.iconSize} color={darkTheme.textSecondary} />
-                  </View>
-                  <Text style={{ color: darkTheme.textSecondary }} className={`text-center ${item.textSize}`}>{item.text}</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          ))}
+          {images.map((image) => {
+            // Calculate aspect ratio
+            const aspectRatio = image.width && image.height ? image.width / image.height : 3 / 3;
+            return (
+              <View key={image.id} style={{ width: '48%', aspectRatio, marginBottom: 16}}>
+                <TouchableOpacity
+                  className="rounded-2xl overflow-hidden border"
+                  style={{ 
+                    backgroundColor: darkTheme.surface, 
+                    borderColor: darkTheme.border,
+                    paddingVertical:8,
+                    paddingHorizontal:8,
+                  }}
+                  onPress={() => openModal(image)}
+                >
+                  <Image
+                    source={{ uri: image.uri }}
+                    className="w-full h-full"
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -83,7 +125,7 @@ const HomeScreen = () => {
         onRequestClose={closeModal}
       >
         <View className="flex-1" style={{ backgroundColor: darkTheme.background }}>
-          {/* Header with Close Button */}
+          {/* Header with Close and Delete Button */}
           <View className="flex-row items-center justify-between px-6 py-4">
             <TouchableOpacity 
               onPress={closeModal}
@@ -92,7 +134,44 @@ const HomeScreen = () => {
             >
               <Ionicons name="close" size={24} color={darkTheme.textPrimary} />
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowDeletePrompt(true)}
+              className="p-2 rounded-full"
+              style={{ backgroundColor: '#e53935', marginLeft: 'auto' }}
+            >
+              <Ionicons name="trash" size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
+
+          {/* Delete Prompt Modal */}
+          <Modal
+            visible={showDeletePrompt}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowDeletePrompt(false)}
+          >
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <View style={{ backgroundColor: darkTheme.surface, padding: 24, borderRadius: 16, width: 300, alignItems: 'center' }}>
+                <Text style={{ color: darkTheme.textPrimary, fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' }}>
+                  Are you sure want to delete the image?
+                </Text>
+                <View style={{ flexDirection: 'row', marginTop: 16 }}>
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#e53935', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 8, marginRight: 12 }}
+                    onPress={handleDelete}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Yes</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ backgroundColor: darkTheme.primary, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 8 }}
+                    onPress={() => setShowDeletePrompt(false)}
+                  >
+                    <Text style={{ color: darkTheme.textPrimary, fontWeight: 'bold' }}>No</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
           {/* Content */}
           <ScrollView 
@@ -101,20 +180,21 @@ const HomeScreen = () => {
             showsVerticalScrollIndicator={false}
           >
             {/* Image */}
-            <View className="w-full aspect-square rounded-2xl overflow-hidden mb-6" 
-              style={{ backgroundColor: darkTheme.surface }}>
-              <View className="flex-1 items-center justify-center">
-                <Ionicons name="image-outline" size={64} color={darkTheme.textSecondary} />
-              </View>
+            <View className="w-full aspect-square rounded-2xl overflow-hidden mb-6">
+              <Image
+                source={{ uri: selectedImage?.uri }}
+                className="w-full h-full"
+                resizeMode="contain"
+              />
             </View>
 
-            {/* AI Description */}
+            {/* Description */}
             <View className="mb-6">
               <Text style={{ color: darkTheme.textSecondary }} className="text-sm font-medium mb-2">
-                AI Description
+                Description
               </Text>
               <Text style={{ color: darkTheme.textPrimary }} className="text-base">
-                {selectedImage?.aiDescription || 'No description available'}
+                {selectedImage?.description || 'No description available'}
               </Text>
             </View>
 

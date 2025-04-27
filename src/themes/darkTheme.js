@@ -1,12 +1,12 @@
 const darkTheme = {
-    background: '#121212',
-    surface: '#1E1E1E',
-    primary: '#BB86FC',
-    secondary: '#03DAC6',
+    background: '#1A1A1A',
+    surface: '#242424',
+    primary: '#7C4DFF',
+    secondary: '#00E5FF',
     textPrimary: '#FFFFFF',
-    textSecondary: '#B0B0B0',
-    border: '#2C2C2C',
-    error: '#CF6679',
+    textSecondary: '#CCCCCC',
+    border: '#333333',
+    error: '#FF5252',
   };
   
   export default darkTheme;

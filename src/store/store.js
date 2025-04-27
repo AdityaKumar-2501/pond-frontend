@@ -1,0 +1,9 @@
+import { configureStore } from '@reduxjs/toolkit';
+import imageReducer from './imageSlice';
+
+export const store = configureStore({
+  reducer: {
+    images: imageReducer,
+  },
+  devTools: process.env.NODE_ENV !== 'production',
+}); 

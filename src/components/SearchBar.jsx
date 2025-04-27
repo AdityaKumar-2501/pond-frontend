@@ -14,10 +14,10 @@ const SearchBar = () => {
                 {/* Menu Button */}
                 <TouchableOpacity 
                     className="flex justify-center items-center p-2 rounded-full" 
-                    style={{ backgroundColor: darkTheme.surface }}>
+                    >
                     <Ionicons
                         name="menu"
-                        size={24}
+                        size={30}
                         color={darkTheme.primary}
                     />
                 </TouchableOpacity>
@@ -48,17 +48,6 @@ const SearchBar = () => {
                             />
                         </TouchableOpacity>
                     )}
-                </TouchableOpacity>
-
-                {/* Add Button */}
-                <TouchableOpacity 
-                    className="flex justify-center items-center p-2 rounded-full" 
-                    style={{ backgroundColor: darkTheme.surface }}>
-                    <Ionicons
-                        name="add-circle-outline"
-                        size={24}
-                        color={darkTheme.primary}
-                    />
                 </TouchableOpacity>
             </View>
         </View>

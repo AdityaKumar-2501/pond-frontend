@@ -1,10 +1,65 @@
-import { View, Text, TouchableOpacity } from 'react-native';
-import React from 'react';
+import { View, Text, TouchableOpacity, Image as RNImage } from 'react-native';
+import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import darkTheme from '../themes/darkTheme';
+import * as ImagePicker from 'expo-image-picker';
+import { useImages } from '../contexts/ImageContext';
 
-const UploadScreen = () => {
+const UploadScreen = ({ navigation }) => {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const { addImage } = useImages();
+  
+  const selectImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        alert('Sorry, we need camera roll permissions to make this work!');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const imageUri = result.assets[0].uri;
+        setSelectedImage(imageUri);
+        // Get image dimensions
+        RNImage.getSize(imageUri, (width, height) => {
+          const newImage = {
+            uri: imageUri,
+            description: '',
+            tags: [],
+            width,
+            height,
+          };
+          const imageId = addImage(newImage);
+          navigation.navigate('Everything', { 
+            selectedImageId: imageId 
+          });
+        }, (error) => {
+          // fallback if getSize fails
+          const newImage = {
+            uri: imageUri,
+            description: '',
+            tags: [],
+          };
+          const imageId = addImage(newImage);
+          navigation.navigate('Everything', { 
+            selectedImageId: imageId 
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
       {/* Header */}
@@ -39,6 +94,7 @@ const UploadScreen = () => {
             <TouchableOpacity
               className="px-6 py-3 rounded-full"
               style={{ backgroundColor: darkTheme.primary }}
+              onPress={selectImage}
             >
               <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
                 Choose File
