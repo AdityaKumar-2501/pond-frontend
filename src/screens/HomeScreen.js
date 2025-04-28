@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '../components/SearchBar';
 import darkTheme from '../themes/darkTheme';
 import { useImages } from '../contexts/ImageContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
 
 const HomeScreen = ({ route, navigation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -14,8 +16,11 @@ const HomeScreen = ({ route, navigation }) => {
   const [showAddTagPrompt, setShowAddTagPrompt] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [tagColors, setTagColors] = useState({});
+  const [error, setError] = useState(null);
   
-  const { images, deleteImage, updateImage } = useImages();
+  const { images, loading, deleteImage, updateImage, fetchImages } = useImages();
+  const { user, logout } = useAuth();
+  const { hasImages } = useImages();
 
   // Generate random color for tags
   const getRandomColor = () => {
@@ -107,6 +112,60 @@ const HomeScreen = ({ route, navigation }) => {
     navigation.navigate('Upload');
   };
 
+  // Check if user is logged in
+  useEffect(() => {
+    const initializeScreen = async () => {
+      const isLoggedIn = await AsyncStorage.getItem('userToken');
+      if (!isLoggedIn) {
+        navigation.navigate('Login');
+        return;
+      }
+      try {
+        await fetchImages();
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching images:', err);
+      }
+    };
+    initializeScreen();
+  }, []);
+  
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
+        <View className="flex-1 justify-center items-center px-6">
+          <Text className="text-xl text-center mb-4" style={{ color: darkTheme.textPrimary }}>
+            Error loading images: {error}
+          </Text>
+          <TouchableOpacity
+            className="px-6 py-3 rounded-full"
+            style={{ backgroundColor: darkTheme.primary }}
+            onPress={() => {
+              setError(null);
+              fetchImages();
+            }}
+          >
+            <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
+              Retry
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-xl" style={{ color: darkTheme.textPrimary }}>
+            Loading images...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (images.length === 0) {
     return (
       <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
@@ -129,6 +188,23 @@ const HomeScreen = ({ route, navigation }) => {
           >
             <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
               Upload Image
+            </Text>
+          </TouchableOpacity>
+
+          {/* Log Out Button */}
+          <TouchableOpacity
+            className="mt-4 px-6 py-3 rounded-full"
+            style={{ backgroundColor: darkTheme.surface }}
+            onPress={() => {
+              logout();
+              navigation.navigate('Login');
+              AsyncStorage.removeItem('userToken');
+              navigation.replace('Login');
+            }}
+          >
+
+            <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
+              Log Out
             </Text>
           </TouchableOpacity>
         </View>

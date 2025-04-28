@@ -24,7 +24,41 @@ const ImageContext = createContext();
 export const ImageProvider = ({ children }) => {
   const [images, setImages] = useState([]);
   const [hasImages, setHasImages] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { userToken } = useAuth();
+
+  const fetchImages = async () => {
+    try {
+      if (!userToken) {
+        throw new Error('Authentication required');
+      }
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/images`, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+        },
+      });
+      
+      if (response.data.success) {
+        const fetchedImages = response.data.images.map(img => ({
+          id: img._id,
+          uri: img.url,
+          description: img.description || '',
+          tags: img.tags || [],
+          timestamp: img.createdAt,
+          width: img.width,
+          height: img.height
+        }));
+        setImages(fetchedImages);
+        setHasImages(fetchedImages.length > 0);
+      }
+    } catch (error) {
+      console.error('Error fetching images:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const uploadImage = async (imageUri) => {
     try {
@@ -103,12 +137,14 @@ export const ImageProvider = ({ children }) => {
   };
 
   return (
-    <ImageContext.Provider value={{ 
-      images, 
-      hasImages, 
-      addImage, 
-      updateImage, 
-      deleteImage 
+    <ImageContext.Provider value={{
+      images,
+      hasImages,
+      loading,
+      addImage,
+      updateImage,
+      deleteImage,
+      fetchImages
     }}>
       {children}
     </ImageContext.Provider>
