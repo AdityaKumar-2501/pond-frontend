@@ -70,10 +70,15 @@ const HomeScreen = ({ route, navigation }) => {
     setNewTag('');
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedImage) {
-      deleteImage(selectedImage.id);
-      closeModal();
+      try {
+        await deleteImage(selectedImage.id);
+        closeModal();
+      } catch (err) {
+        setError(`Failed to delete image: ${err.message}`);
+        setShowDeletePrompt(false);
+      }
     }
   };
 

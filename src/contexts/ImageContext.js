@@ -129,10 +129,29 @@ export const ImageProvider = ({ children }) => {
     );
   };
 
-  const deleteImage = (id) => {
-    setImages(prevImages => prevImages.filter(image => image.id !== id));
-    if (images.length === 1) {
-      setHasImages(false);
+  const deleteImage = async (id) => {
+    try {
+      if (!userToken) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await axios.delete(`${API_URL}/images/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+        },
+      });
+
+      if (response.data.success) {
+        setImages(prevImages => prevImages.filter(image => image.id !== id));
+        if (images.length === 1) {
+          setHasImages(false);
+        }
+      } else {
+        throw new Error(response.data.message || 'Delete failed');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      throw error;
     }
   };
 
