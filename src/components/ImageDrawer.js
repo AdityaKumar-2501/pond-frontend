@@ -113,7 +113,7 @@ const ImageDrawer = ({ isVisible, onClose, imageData, onDescriptionChange }) => 
             {/* AI Description */}
             <View className="mb-6">
               <Text style={{ color: darkTheme.textSecondary }} className="text-sm font-medium mb-2">
-                AI Description
+                AI Description New
               </Text>
               <Text style={{ color: darkTheme.textPrimary }} className="text-base">
                 {imageData?.aiDescription || 'No description available'}

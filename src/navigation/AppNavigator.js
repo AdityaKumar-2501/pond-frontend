@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Platform, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,8 +8,10 @@ import UploadScreen from '../screens/UploadScreen';
 import RevisitScreen from '../screens/RevisitScreen';
 import SearchScreen from '../screens/SearchScreen';
 import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen';
 import darkTheme from '../themes/darkTheme';
 import { useImages } from '../contexts/ImageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -117,7 +119,15 @@ const TabNavigator = ({ hasImages, setHasImages }) => {
 
 const AppNavigator = () => {
   const { hasImages } = useImages();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { userToken, isLoading, isLoggedIn } = useAuth();
+
+  useEffect(() => {
+    isLoggedIn();
+  }, []);
+
+  if (isLoading) {
+    return null; // Or a loading screen
+  }
 
   return (
     <Stack.Navigator
@@ -125,11 +135,14 @@ const AppNavigator = () => {
         headerShown: false,
       }}
     >
-      {!isLoggedIn ? (
-        <Stack.Screen name="Login">
-          {(props) => <LoginScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
-        </Stack.Screen>
+      {!userToken ? (
+        // Auth Stack
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+        </>
       ) : (
+        // App Stack
         <>
           <Stack.Screen name="MainTabs">
             {(props) => <TabNavigator {...props} hasImages={hasImages} />}

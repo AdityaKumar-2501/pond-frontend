@@ -7,6 +7,8 @@ import darkTheme from '../themes/darkTheme';
 const WelcomeScreen = () => {
   const navigation = useNavigation();
 
+
+
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
       <View className="flex-1 items-center justify-center px-8">
@@ -15,7 +17,7 @@ const WelcomeScreen = () => {
           className="text-4xl font-bold text-center mb-6" 
           style={{ color: darkTheme.textPrimary }}
         >
-          Welcome to mymind
+          Welcome to POND
         </Text>
 
         {/* App Details */}

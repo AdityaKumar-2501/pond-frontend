@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image as RNImage } from 'react-native';
+import { View, Text, TouchableOpacity, Image as RNImage, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,8 @@ import { useImages } from '../contexts/ImageContext';
 
 const UploadScreen = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState(null);
   const { addImage } = useImages();
   
   const selectImage = async () => {
@@ -29,33 +31,22 @@ const UploadScreen = ({ navigation }) => {
       if (!result.canceled) {
         const imageUri = result.assets[0].uri;
         setSelectedImage(imageUri);
-        // Get image dimensions
-        RNImage.getSize(imageUri, (width, height) => {
-          const newImage = {
+        setIsUploading(true);
+        setError(null);
+        
+        try {
+          const imageId = await addImage({
             uri: imageUri,
-            description: 'A beautiful image uploaded by the user',
-            tags: ['test', 'upload', 'image', 'photo', 'new', 'recent'],
-            userDescription: 'This is a test image for search functionality',
-            width,
-            height,
-          };
-          const imageId = addImage(newImage);
-          navigation.navigate('Everything', { 
-            selectedImageId: imageId 
           });
-        }, (error) => {
-          // fallback if getSize fails
-          const newImage = {
-            uri: imageUri,
-            description: 'A beautiful image uploaded by the user',
-            tags: ['test', 'upload', 'image', 'photo', 'new', 'recent'],
-            userDescription: 'This is a test image for search functionality',
-          };
-          const imageId = addImage(newImage);
-          navigation.navigate('Everything', { 
-            selectedImageId: imageId 
+          
+          navigation.navigate('Everything', {
+            selectedImageId: imageId
           });
-        });
+        } catch (error) {
+          setError(error.message || 'Failed to upload image');
+        } finally {
+          setIsUploading(false);
+        }
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -71,6 +62,11 @@ const UploadScreen = ({ navigation }) => {
 
       {/* Upload Area */}
       <View className="flex-1 justify-center items-center p-6">
+        {error && (
+          <View className="mb-4 p-4 bg-red-500/20 rounded-lg">
+            <Text className="text-red-500">{error}</Text>
+          </View>
+        )}
         <View 
           className="w-full aspect-[4/3] rounded-3xl border-2 border-dashed justify-center items-center"
           style={{ borderColor: 'rgba(255,255,255,0.2)' }}
@@ -93,15 +89,22 @@ const UploadScreen = ({ navigation }) => {
             >
               Tap to choose a file from your device
             </Text>
-            <TouchableOpacity
-              className="px-6 py-3 rounded-full"
-              style={{ backgroundColor: darkTheme.primary }}
-              onPress={selectImage}
-            >
-              <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
-                Choose File
-              </Text>
-            </TouchableOpacity>
+            {isUploading ? (
+              <View className="px-6 py-3">
+                <ActivityIndicator size="small" color={darkTheme.primary} />
+              </View>
+            ) : (
+              <TouchableOpacity
+                className="px-6 py-3 rounded-full"
+                style={{ backgroundColor: darkTheme.primary }}
+                onPress={selectImage}
+                disabled={isUploading}
+              >
+                <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
+                  Choose File
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

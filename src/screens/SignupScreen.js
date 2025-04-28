@@ -4,23 +4,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import darkTheme from '../themes/darkTheme';
 import { useAuth } from '../contexts/AuthContext';
 
-const LoginScreen = ({ navigation }) => {
+const SignupScreen = ({ navigation }) => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, error, isLoading, clearError } = useAuth();
+  const { signup, error, isLoading, clearError } = useAuth();
 
   useEffect(() => {
     return () => clearError();
   }, []);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
+  const handleSignup = async () => {
+    if (!name || !email || !password) {
       return;
     }
 
-    const success = await login(email, password);
+    const success = await signup(name, email, password);
     if (success) {
-      navigation.replace('Everything');
+      // Navigate to login screen after successful signup
+      navigation.replace('Login');
     }
   };
 
@@ -28,7 +30,7 @@ const LoginScreen = ({ navigation }) => {
     <SafeAreaView className="flex-1" style={{ backgroundColor: darkTheme.background }}>
       <View className="px-6 py-4">
         <Text className="text-3xl font-bold mb-8" style={{ color: darkTheme.textPrimary }}>
-          Login
+          Create Account
         </Text>
 
         {error && (
@@ -38,6 +40,25 @@ const LoginScreen = ({ navigation }) => {
         )}
 
         <View className="space-y-4">
+          <View>
+            <Text className="text-sm mb-1" style={{ color: darkTheme.textSecondary }}>
+              Name
+            </Text>
+            <TextInput
+              className="p-4 rounded-lg mb-2"
+              style={{
+                backgroundColor: darkTheme.surface,
+                color: darkTheme.textPrimary,
+                borderWidth: 1,
+                borderColor: darkTheme.border,
+              }}
+              placeholder="Enter your name"
+              placeholderTextColor={darkTheme.textSecondary}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+
           <View>
             <Text className="text-sm mb-1" style={{ color: darkTheme.textSecondary }}>
               Email
@@ -71,7 +92,7 @@ const LoginScreen = ({ navigation }) => {
                 borderWidth: 1,
                 borderColor: darkTheme.border,
               }}
-              placeholder="Enter your password"
+              placeholder="Choose a password"
               placeholderTextColor={darkTheme.textSecondary}
               value={password}
               onChangeText={setPassword}
@@ -87,19 +108,19 @@ const LoginScreen = ({ navigation }) => {
             <TouchableOpacity
               className="bg-blue-500 p-4 rounded-lg items-center"
               style={{ backgroundColor: darkTheme.primary }}
-              onPress={handleLogin}
+              onPress={handleSignup}
             >
-              <Text className="text-white font-medium">Login</Text>
+              <Text className="text-white font-medium">Sign Up</Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
             className="mt-4 items-center"
-            onPress={() => navigation.navigate('Signup')}
+            onPress={() => navigation.navigate('Login')}
           >
             <Text style={{ color: darkTheme.textSecondary }}>
-              Don't have an account?{' '}
-              <Text style={{ color: darkTheme.primary }}>Sign up</Text>
+              Already have an account?{' '}
+              <Text style={{ color: darkTheme.primary }}>Login</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -108,4 +129,4 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-export default LoginScreen;
+export default SignupScreen;
