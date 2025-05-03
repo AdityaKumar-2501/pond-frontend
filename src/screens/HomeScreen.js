@@ -117,6 +117,14 @@ const HomeScreen = ({ route, navigation }) => {
     navigation.navigate('Upload');
   };
 
+  const handleDescriptionChange = (description) => {
+    if (selectedImage) {
+      const updatedImage = { ...selectedImage, additionalInfo: description };
+      setSelectedImage(updatedImage);
+      updateImage(selectedImage.id, { additionalInfo: description });
+    }
+  };
+
   // Check if user is logged in
   useEffect(() => {
     const initializeScreen = async () => {
@@ -196,22 +204,7 @@ const HomeScreen = ({ route, navigation }) => {
             </Text>
           </TouchableOpacity>
 
-          {/* Log Out Button */}
-          <TouchableOpacity
-            className="mt-4 px-6 py-3 rounded-full"
-            style={{ backgroundColor: darkTheme.surface }}
-            onPress={() => {
-              logout();
-              navigation.navigate('Login');
-              AsyncStorage.removeItem('userToken');
-              navigation.replace('Login');
-            }}
-          >
-
-            <Text className="text-base font-medium" style={{ color: darkTheme.textPrimary }}>
-              Log Out
-            </Text>
-          </TouchableOpacity>
+          
         </View>
       </SafeAreaView>
     );

@@ -38,7 +38,7 @@ const SearchScreen = () => {
   const openImageDetails = (image) => {
     // Navigate to the Everything tab and pass the selectedImageId
     navigation.navigate('MainTabs', {
-      screen: 'Everything',
+      screen: 'HomeScreen',
       params: { selectedImageId: image.id }
     });
   };

@@ -62,14 +62,14 @@ const TabNavigator = ({ hasImages, setHasImages }) => {
       }}
     >
       <Tab.Screen 
-        name="Everything" 
+        name="Home" 
         component={HomeScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon 
               focused={focused} 
               icon="grid-outline" 
-              label="Everything"
+              label="Home"
             />
           ),
         }}
@@ -134,21 +134,35 @@ const AppNavigator = () => {
       screenOptions={{
         headerShown: false,
       }}
+      initialRouteName={userToken ? "MainTabs" : "Login"}
     >
       {!userToken ? (
         // Auth Stack
-        <>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} />
-        </>
+        <Stack.Group>
+          <Stack.Screen 
+            name="Login" 
+            component={LoginScreen}
+            options={{
+              animation: 'none'
+            }}
+          />
+          <Stack.Screen 
+            name="Signup" 
+            component={SignupScreen}
+            options={{
+              animation: 'none'
+            }}
+          />
+        </Stack.Group>
       ) : (
         // App Stack
-        <>
+        <Stack.Group>
           <Stack.Screen name="MainTabs">
             {(props) => <TabNavigator {...props} hasImages={hasImages} />}
           </Stack.Screen>
+          <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
-        </>
+        </Stack.Group>
       )}
     </Stack.Navigator>
   );

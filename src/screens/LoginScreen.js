@@ -20,7 +20,10 @@ const LoginScreen = ({ navigation }) => {
 
     const success = await login(email, password);
     if (success) {
-      navigation.replace('Everything');
+      navigation.navigate('MainTabs', {
+        screen: 'HomeScreen',
+        params: { selectedImageId: image.id }
+      });
     }
   };
 

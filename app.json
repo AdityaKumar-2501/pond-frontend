@@ -19,11 +19,17 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.coding_dev.PondApp"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c1a0a383-996e-4ee1-9144-b8dd47e536b4"
+      }
     }
   }
 }

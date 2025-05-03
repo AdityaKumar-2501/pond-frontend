@@ -39,8 +39,11 @@ const UploadScreen = ({ navigation }) => {
             uri: imageUri,
           });
           
-          navigation.navigate('Everything', {
-            selectedImageId: imageId
+          navigation.navigate('MainTabs', {
+            screen: 'HomeScreen',
+            params: {
+              selectedImageId: imageId
+            }
           });
         } catch (error) {
           setError(error.message || 'Failed to upload image');

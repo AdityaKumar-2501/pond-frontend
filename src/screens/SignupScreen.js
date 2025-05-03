@@ -22,7 +22,7 @@ const SignupScreen = ({ navigation }) => {
     const success = await signup(name, email, password);
     if (success) {
       // Navigate to login screen after successful signup
-      navigation.replace('Login');
+      navigation.navigate('Login');
     }
   };
 

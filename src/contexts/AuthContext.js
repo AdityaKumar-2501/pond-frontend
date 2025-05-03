@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.31.21:3000/api';
+console.log('API_URL:', process.env.EXPO_PUBLIC_API_URL);
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -76,6 +77,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
   const clearError = () => setError(null);
 
   return (
@@ -88,7 +90,7 @@ export const AuthProvider = ({ children }) => {
         signup,
         logout,
         isLoggedIn,
-        clearError
+        clearError,
       }}
     >
       {children}
