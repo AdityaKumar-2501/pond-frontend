@@ -58,13 +58,12 @@ export const ImageProvider = ({ children }) => {
                     id: img._id,
                     uri: img.url,
                     description: img.description || "",
-                    additionalInfo: img.additionalInfo || "",
+                    aditionalInfo: img.aditionalInfo || "",
                     tags: img.tags || [],
                     timestamp: img.createdAt,
                     width: img.width,
                     height: img.height,
                 }));
-                console.log("Fetched images:", fetchedImages);
                 setImages(fetchedImages);
                 setHasImages(fetchedImages.length > 0);
             }
@@ -100,21 +99,35 @@ export const ImageProvider = ({ children }) => {
             });
 
             const formData = new FormData();
-            formData.append("image", {
-                uri:
-                    Platform.OS === "android"
-                        ? imageUri
-                        : imageUri.replace("file://", ""),
-                name: fileName,
-                type: mimeType,
-            });
+            
+            // Handle base64 data URI
+            if (imageUri.startsWith('data:')) {
+                const base64Data = imageUri.split(',')[1];
+                const blob = await fetch(imageUri).then(r => r.blob());
+                formData.append('image', blob, fileName);
+            } else {
+                // Handle file URI
+                formData.append('image', {
+                    uri: Platform.OS === "android" ? imageUri : imageUri.replace("file://", ""),
+                    type: mimeType,
+                    name: fileName,
+                });
+            }
 
-            console.log("FormData prepared:", {
-                hasImage: formData.has("image"),
-                uri: formData.get("image").uri,
-                type: formData.get("image").type,
-                name: formData.get("image").name,
-            });
+            
+
+            // Debug the actual image object being appended
+            const imageObject = {
+                uri: Platform.OS === "android" ? imageUri : imageUri.replace("file://", ""),
+                type: mimeType,
+                name: fileName,
+            };
+            console.log("Image object being appended:", imageObject);
+
+            // Log FormData entries
+            for (let [key, value] of formData.entries()) {
+                console.log(`FormData entry - ${key}:`, value);
+            }
 
             const response = await axios.post(`${API_URL}/upload`, formData, {
                 headers: {

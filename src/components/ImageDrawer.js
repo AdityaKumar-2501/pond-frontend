@@ -1,13 +1,12 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import {
     View,
     Text,
     ScrollView,
     TouchableOpacity,
     TextInput,
-    PanResponder,
-    Animated,
-    Dimensions,
+    Modal,
+    Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import darkTheme from "../themes/darkTheme";
@@ -15,28 +14,70 @@ import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
 import { useImages } from "../contexts/ImageContext";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-const MIN_HEIGHT = SCREEN_HEIGHT * (2 / 3);
-const MAX_HEIGHT = SCREEN_HEIGHT;
-
 const ImageDrawer = ({
     isVisible,
     onClose,
     imageData,
     onDescriptionChange,
 }) => {
-    const pan = useRef(new Animated.Value(0)).current;
-    const lastPanValue = useRef(0);
     const { userToken } = useAuth();
     const { updateImage } = useImages();
     const [isSaving, setIsSaving] = useState(false);
+    const [showDeletePrompt, setShowDeletePrompt] = useState(false);
+    const [showAddTagPrompt, setShowAddTagPrompt] = useState(false);
+    const [newTag, setNewTag] = useState("");
     const saveTimeout = useRef(null);
-    const [localDescription, setLocalDescription] = useState(
-        imageData?.additionalInfo || ""
-    );
+    const [localDescription, setLocalDescription] = useState(imageData?.aditionalInfo);
+
 
     const API_URL =
         process.env.EXPO_PUBLIC_API_URL || "http://192.168.31.21:3000/api";
+
+    const tagColors = [
+        "#98CDC8",
+        "#F706AF",
+        "#1767B5",
+        "#6F98CC",
+        "#FC9471",
+        "#D85D73",
+        "#BB7484",
+        "#F483A8",
+        "#E1B5E0",
+        "#598DCD",
+        "#14AE4A",
+        "#2755AD",
+        "#87351B",
+        "#002176",
+        "#06FC4E",
+        "#99F5B2",
+        "#35484F",
+        "#B2F06E",
+        "#119E29",
+        "#4929BF",
+        "#1C516A",
+        "#83988B",
+        "#0DA71A",
+        "#CF51B9",
+        "#1CEF7E",
+        "#35EF4A",
+        "#A9B401",
+        "#2FF930",
+        "#995664",
+        "#DE34C8"
+    ];
+    const getRandomColor = () => {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    };
+
+    console.log("ImageDrawer - imageData:", imageData);
+
+    
+
 
     const saveDescription = useCallback(
         async (description) => {
@@ -44,10 +85,10 @@ const ImageDrawer = ({
 
             try {
                 setIsSaving(true);
-                await axios.patch(
-                    `${API_URL}/images/${imageData.id}/additional-info`,
+                await axios.put(
+                    `${API_URL}/images/${imageData.id}/description`,
                     {
-                        additionalInfo: description,
+                        userDescription: description,
                     },
                     {
                         headers: {
@@ -56,7 +97,7 @@ const ImageDrawer = ({
                     }
                 );
                 // Update the local state in ImageContext
-                updateImage(imageData.id, { additionalInfo: description });
+                updateImage(imageData.id, { aditionalInfo: description });
             } catch (error) {
                 console.error("Error saving description:", error);
             } finally {
@@ -87,177 +128,274 @@ const ImageDrawer = ({
 
     // Update local description when imageData changes
     React.useEffect(() => {
-        setLocalDescription(imageData.additionalInfo || "");
-    }, [imageData?.additionalInfo]);
+        setLocalDescription(imageData?.aditionalInfo);
+    }, [imageData]);
 
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: (_, gestureState) => {
-                return Math.abs(gestureState.dy) > 5;
-            },
-            onPanResponderGrant: () => {
-                lastPanValue.current = pan._value;
-            },
-            onPanResponderMove: (_, gestureState) => {
-                const newValue = lastPanValue.current + gestureState.dy;
-                if (newValue <= 0 && newValue >= -(MAX_HEIGHT - MIN_HEIGHT)) {
-                    pan.setValue(newValue);
-                }
-            },
-            onPanResponderRelease: (_, gestureState) => {
-                const velocity = gestureState.vy;
-                const currentValue = pan._value;
-                const isSwipingDown = velocity > 0;
-                const isSwipingUp = velocity < 0;
-                const isFastSwipe = Math.abs(velocity) > 0.5;
+    const handleDelete = async () => {
+        try {
+            await axios.delete(`${API_URL}/images/${imageData.id}`, {
+                headers: {
+                    Authorization: `Bearer ${userToken}`,
+                },
+            });
+            setShowDeletePrompt(false);
+            onClose();
+        } catch (error) {
+            console.error("Error deleting image:", error);
+        }
+    };
 
-                if (isFastSwipe) {
-                    if (isSwipingDown) {
-                        if (currentValue > -(MAX_HEIGHT - MIN_HEIGHT) * 0.3) {
-                            // Snap to min height
-                            Animated.spring(pan, {
-                                toValue: 0,
-                                useNativeDriver: false,
-                            }).start();
-                        } else {
-                            // Close drawer
-                            onClose();
-                        }
-                    } else if (isSwipingUp) {
-                        // Snap to max height
-                        Animated.spring(pan, {
-                            toValue: -(MAX_HEIGHT - MIN_HEIGHT),
-                            useNativeDriver: false,
-                        }).start();
-                    }
-                } else {
-                    // No fast swipe, check position
-                    if (currentValue > -(MAX_HEIGHT - MIN_HEIGHT) * 0.5) {
-                        // Snap to min height
-                        Animated.spring(pan, {
-                            toValue: 0,
-                            useNativeDriver: false,
-                        }).start();
-                    } else {
-                        // Snap to max height
-                        Animated.spring(pan, {
-                            toValue: -(MAX_HEIGHT - MIN_HEIGHT),
-                            useNativeDriver: false,
-                        }).start();
-                    }
+    const handleAddTag = async () => {
+        if (!newTag.trim()) return;
+
+        try {
+            const updatedTags = [...(imageData.tags || []), newTag.trim()];
+            await axios.put(
+                `${API_URL}/images/${imageData.id}/tags`,
+                { tags: updatedTags },
+                {
+                    headers: {
+                        Authorization: `Bearer ${userToken}`,
+                    },
                 }
-            },
-        })
-    ).current;
+            );
+            updateImage(imageData.id, { tags: updatedTags });
+            setNewTag("");
+            setShowAddTagPrompt(false);
+        } catch (error) {
+            console.error("Error adding tag:", error);
+        }
+    };
+
+    const handleDeleteTag = async (tagToDelete) => {
+        try {
+            const updatedTags = imageData.tags.filter(tag => tag !== tagToDelete);
+            await axios.put(
+                `${API_URL}/images/${imageData.id}/tags`,
+                { tags: updatedTags },
+                {
+                    headers: {
+                        Authorization: `Bearer ${userToken}`,
+                    },
+                }
+            );
+            updateImage(imageData.id, { tags: updatedTags });
+        } catch (error) {
+            console.error("Error deleting tag:", error);
+        }
+    };
 
     if (!isVisible) return null;
 
     return (
         <View className="absolute inset-0">
-            <View className="bg-black/50 flex-1" onTouchEnd={onClose} />
-            <Animated.View
-                className="bg-white rounded-t-3xl"
-                style={[
-                    {
-                        backgroundColor: darkTheme.surface,
-                        height: MIN_HEIGHT,
-                        transform: [{ translateY: pan }],
-                    },
-                ]}
-                {...panResponder.panHandlers}
+            <Modal
+                visible={isVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={onClose}
             >
-                <View className="w-12 h-1 bg-gray-300 rounded-full self-center my-4" />
+                <View className="flex-1" style={{ backgroundColor: darkTheme.background }}>
+                    {/* Header with Close and Delete Button */}
+                    <View className="flex-row items-center justify-between px-6 py-4">
+                        <TouchableOpacity
+                            onPress={onClose}
+                            className="p-2 rounded-full"
+                            style={{ backgroundColor: darkTheme.surface }}
+                        >
+                            <Ionicons name="close" size={24} color={darkTheme.textPrimary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setShowDeletePrompt(true)}
+                            className="p-2 rounded-full"
+                            style={{ backgroundColor: '#e53935', marginLeft: 'auto' }}
+                        >
+                            <Ionicons name="trash" size={24} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
 
-                <Animated.View
-                    style={{
-                        height: Animated.add(
-                            MIN_HEIGHT - 24,
-                            Animated.multiply(pan, -1)
-                        ),
-                    }}
-                >
+                    {/* Delete Prompt Modal */}
+                    <Modal
+                        visible={showDeletePrompt}
+                        transparent={true}
+                        animationType="fade"
+                        onRequestClose={() => setShowDeletePrompt(false)}
+                    >
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                            <View style={{ backgroundColor: darkTheme.surface, padding: 24, borderRadius: 16, width: 300, alignItems: 'center' }}>
+                                <Text style={{ color: darkTheme.textPrimary, fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' }}>
+                                    Are you sure want to delete the image?
+                                </Text>
+                                <View style={{ flexDirection: 'row', marginTop: 16 }}>
+                                    <TouchableOpacity
+                                        style={{ backgroundColor: '#e53935', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 8, marginRight: 12 }}
+                                        onPress={handleDelete}
+                                    >
+                                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Yes</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={{ backgroundColor: darkTheme.primary, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 8 }}
+                                        onPress={() => setShowDeletePrompt(false)}
+                                    >
+                                        <Text style={{ color: darkTheme.textPrimary, fontWeight: 'bold' }}>No</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    {/* Content */}
                     <ScrollView
-                        showsVerticalScrollIndicator={false}
+                        className="flex-1"
                         contentContainerStyle={{ padding: 24 }}
+                        showsVerticalScrollIndicator={false}
                     >
                         {/* Image */}
-                        <View
-                            className="w-full aspect-square rounded-2xl overflow-hidden mb-6"
-                            style={{ backgroundColor: darkTheme.background }}
-                        >
-                            <View className="flex-1 items-center justify-center">
-                                <Ionicons
-                                    name="image-outline"
-                                    size={64}
-                                    color={darkTheme.textSecondary}
-                                />
-                            </View>
+                        <View className="w-full aspect-square rounded-2xl overflow-hidden mb-6">
+                            <Image
+                                source={{ uri: imageData.uri }}
+                                className="w-full h-full"
+                                resizeMode="contain"
+                            />
                         </View>
 
                         {/* AI Description */}
                         <View className="mb-6">
-                            <Text
-                                style={{ color: darkTheme.textSecondary }}
-                                className="text-sm font-medium mb-2"
-                            >
-                                AI Description New
+                            <Text style={{ color: darkTheme.textSecondary }} className="text-sm font-medium mb-2">
+                                AI Description
                             </Text>
-                            <Text
-                                style={{ color: darkTheme.textPrimary }}
-                                className="text-base"
-                            >
-                                {imageData?.aiDescription ||
-                                    "No description available"}
+                            <Text style={{ color: darkTheme.textPrimary }} className="text-base">
+                                {imageData?.description || 'No description available'}
                             </Text>
                         </View>
 
                         {/* Tags */}
                         <View className="mb-6">
-                            <Text
-                                style={{ color: darkTheme.textSecondary }}
-                                className="text-sm font-medium mb-2"
-                            >
+                            <Text style={{ color: darkTheme.textSecondary }} className="text-sm font-medium mb-2">
                                 Tags
                             </Text>
+                            
+                            {/* Add Tag Button */}
+                            <View className="flex-row items-center mb-4">
+                                <TouchableOpacity
+                                    className="py-3 px-1 rounded-xl items-center justify-center"
+                                    style={{
+                                        backgroundColor: darkTheme.primary,
+                                        width: '30%'
+                                    }}
+                                    onPress={() => setShowAddTagPrompt(true)}
+                                >
+                                    <View className="flex-row items-center">
+                                        <Ionicons name="add-circle-outline" size={16} color={darkTheme.textPrimary} />
+                                        <Text style={{ color: darkTheme.textPrimary }} className="text-base font-medium ml-2">
+                                            Add Tag
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Tags List */}
                             <View className="flex-row flex-wrap gap-2">
                                 {imageData?.tags?.map((tag, index) => (
                                     <View
                                         key={index}
-                                        className="px-3 py-1 rounded-full"
+                                        className="flex-row items-center px-3 py-1 rounded-full"
                                         style={{
-                                            backgroundColor:
-                                                darkTheme.background,
+                                            backgroundColor: tagColors[index],
+                                            opacity: 0.8
                                         }}
                                     >
-                                        <Text
-                                            style={{
-                                                color: darkTheme.textPrimary,
-                                            }}
-                                            className="text-sm"
-                                        >
+                                        <Text style={{ color: '#fff', fontWeight: '500' }} className="text-sm">
                                             {tag}
                                         </Text>
+                                        <TouchableOpacity
+                                            className="ml-2"
+                                            onPress={() => handleDeleteTag(tag)}
+                                        >
+                                            <Ionicons name="close-circle" size={16} color="#fff" />
+                                        </TouchableOpacity>
                                     </View>
                                 ))}
                             </View>
+
+                            {/* Add Tag Prompt Modal */}
+                            <Modal
+                                visible={showAddTagPrompt}
+                                transparent={true}
+                                animationType="fade"
+                                onRequestClose={() => setShowAddTagPrompt(false)}
+                            >
+                                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                                    <View style={{ backgroundColor: darkTheme.surface, padding: 24, borderRadius: 16, width: 300 }}>
+                                        <Text style={{ color: darkTheme.textPrimary, fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' }}>
+                                            Add New Tag
+                                        </Text>
+                                        <TextInput
+                                            className="w-full p-3 rounded-xl text-base mb-4"
+                                            style={{
+                                                backgroundColor: darkTheme.background,
+                                                color: darkTheme.textPrimary,
+                                                borderColor: darkTheme.border,
+                                                borderWidth: 1
+                                            }}
+                                            placeholder="Enter tag name..."
+                                            placeholderTextColor={darkTheme.textSecondary}
+                                            value={newTag}
+                                            onChangeText={setNewTag}
+                                            autoFocus={true}
+                                        />
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: darkTheme.background,
+                                                    paddingVertical: 10,
+                                                    paddingHorizontal: 24,
+                                                    borderRadius: 8,
+                                                    flex: 1,
+                                                    marginRight: 8
+                                                }}
+                                                onPress={() => {
+                                                    setShowAddTagPrompt(false);
+                                                    setNewTag('');
+                                                }}
+                                            >
+                                                <Text style={{ color: darkTheme.textPrimary, textAlign: 'center', fontWeight: 'bold' }}>
+                                                    Cancel
+                                                </Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: darkTheme.primary,
+                                                    paddingVertical: 10,
+                                                    paddingHorizontal: 24,
+                                                    borderRadius: 8,
+                                                    flex: 1,
+                                                    marginLeft: 8
+                                                }}
+                                                onPress={handleAddTag}
+                                            >
+                                                <Text style={{ color: darkTheme.textPrimary, textAlign: 'center', fontWeight: 'bold' }}>
+                                                    Save
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                </View>
+                            </Modal>
                         </View>
 
                         {/* User Description */}
                         <View>
-                            <Text
-                                style={{ color: darkTheme.textSecondary }}
-                                className="text-sm font-medium mb-2"
-                            >
+                            <Text style={{ color: darkTheme.textSecondary }} className="text-sm font-medium mb-2">
                                 Your Description
                             </Text>
                             <TextInput
                                 className="w-full p-4 rounded-2xl text-base"
                                 style={{
-                                    backgroundColor: darkTheme.background,
+                                    backgroundColor: darkTheme.surface,
                                     color: darkTheme.textPrimary,
                                     borderColor: darkTheme.border,
-                                    borderWidth: 1,
+                                    borderWidth: 1
                                 }}
                                 placeholder="Add your description..."
                                 placeholderTextColor={darkTheme.textSecondary}
@@ -266,17 +404,14 @@ const ImageDrawer = ({
                                 multiline
                             />
                             {isSaving && (
-                                <Text
-                                    style={{ color: darkTheme.textSecondary }}
-                                    className="text-xs mt-1"
-                                >
+                                <Text style={{ color: darkTheme.textSecondary }} className="text-xs mt-1">
                                     Saving...
                                 </Text>
                             )}
                         </View>
                     </ScrollView>
-                </Animated.View>
-            </Animated.View>
+                </View>
+            </Modal>
         </View>
     );
 };
